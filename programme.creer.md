@@ -1,120 +1,89 @@
+# Instructions pour ChatGPT : Création de Programmes
 
-# Programme: Créer une Clé SSH et l'Ajouter à GitHub
+## Objectif
 
-## Description
+Ce document décrit les étapes et règles que ChatGPT doit suivre pour créer un programme lorsque l'utilisateur en fait la demande. Le programme doit être un utilitaire shell ou un autre type de programme pouvant être exécuté via la ligne de commande.
 
-Ce programme est un script bash qui automatise la création d'une clé SSH, la configuration de l'agent SSH, et l'ajout de la clé SSH à votre compte GitHub via l'API GitHub. Il vérifie également la présence des dépendances requises (`curl` et `git`), propose de les installer si elles ne sont pas présentes, et permet la mise à jour de ces programmes si nécessaire.
+## Structure Générale du Programme
 
-## Fonctionnalités
+Le programme doit être organisé avec les répertoires et fichiers suivants :
 
-1. **Vérification des dépendances** : 
-   - Le script vérifie si `curl` et `git` sont installés.
-   - Il demande à l'utilisateur s'il souhaite installer les programmes manquants.
-   - Offre une option de mise à jour des programmes installés.
+programmeX/
+├── bin/
+│ └── programmeX.sh
+├── lib/
+│ ├── config.sh
+│ ├── uninstall.sh
+│ ├── help.sh
+│ ├── man.sh
+│ └── [autres scripts].sh
+├── programmeX.install.sh
+├── README.md
+└── VERSION
 
-2. **Génération de clé SSH** :
-   - Crée une nouvelle paire de clés SSH avec une taille de 4096 bits.
-   - Ajoute la clé privée à l'agent SSH.
 
-3. **Ajout de la clé SSH à GitHub** :
-   - Demande un Personal Access Token GitHub à l'utilisateur.
-   - Envoie la clé publique SSH à GitHub via l'API REST.
+- **programmeX.sh** : Le point d'entrée du programme, situé dans le répertoire `bin`.
+- **config.sh** : Fichier de configuration contenant toutes les variables globales utilisées par les scripts, situé dans le répertoire `lib`.
+- **uninstall.sh** : Script de désinstallation, situé dans le répertoire `lib`.
+- **help.sh** : Script affichant les options disponibles, situé dans le répertoire `lib`.
+- **man.sh** : Script fournissant la documentation, situé dans le répertoire `lib`.
+- **programmeX.install.sh** : Script d'installation du programme.
+- **README.md** : Fichier de documentation pour expliquer le fonctionnement et l'installation du programme.
+- **VERSION** : Fichier contenant le numéro de version du programme.
 
-## Utilisation
+## Variables
 
-### Pré-requis
+Toutes les variables de configuration doivent être définies dans `config.sh` et utilisées de manière cohérente dans tous les scripts. Voici un exemple de contenu pour `config.sh` :
 
-- Un système Linux avec accès à un terminal.
-- Un compte GitHub.
-- `curl` et `git` doivent être installés, mais le script s'assure qu'ils le sont.
-
-### Instructions
-
-1. **Création du script** :
-   - Créez un fichier bash, par exemple `add_ssh_key_github.sh`, et collez-y le code du script.
-
-2. **Rendre le script exécutable** :
-   - Exécutez la commande : `chmod +x add_ssh_key_github.sh`.
-
-3. **Exécution du script** :
-   - Lancez le script : `./add_ssh_key_github.sh`.
-   - Suivez les instructions à l'écran pour installer les dépendances, générer la clé SSH, et l'ajouter à GitHub.
-
-## Code du script
-
-```bash
+```config.sh
 #!/bin/bash
 
-# Fonction pour vérifier si un programme est installé
-function check_installation {
-    command -v $1 >/dev/null 2>&1
-}
-
-# Fonction pour installer un programme si nécessaire
-function install_program {
-    local program_name=$1
-    if ! check_installation $program_name; then
-        read -p "$program_name n'est pas installé. Voulez-vous l'installer ? [O/n] " response
-        if [[ "$response" =~ ^[Oo]$ || -z "$response" ]]; then
-            sudo apt update
-            sudo apt install -y $program_name
-        else
-            echo "$program_name est nécessaire pour continuer. Veuillez l'installer et réessayer."
-            exit 1
-        fi
-    else
-        echo "$program_name est déjà installé."
-        # Option pour mettre à jour
-        read -p "Voulez-vous vérifier les mises à jour de $program_name ? [O/n] " update_response
-        if [[ "$update_response" =~ ^[Oo]$ || -z "$update_response" ]]; then
-            sudo apt update
-            sudo apt upgrade -y $program_name
-        fi
-    fi
-}
-
-# Vérifier et installer curl si nécessaire
-install_program "curl"
-
-# Vérifier et installer Git si nécessaire
-install_program "git"
-
-# Demander l'email de l'utilisateur
-read -p "Entrez votre adresse email pour associer à la clé SSH: " email
-
-# Générer la clé SSH
-ssh-keygen -t rsa -b 4096 -C "$email" -f ~/.ssh/id_rsa -N ""
-
-# Démarrer l'agent SSH
-eval "$(ssh-agent -s)"
-
-# Ajouter la clé privée à l'agent SSH
-ssh-add ~/.ssh/id_rsa
-
-# Lire la clé publique
-pubkey=$(cat ~/.ssh/id_rsa.pub)
-
-# Demander le jeton d'accès personnel GitHub
-read -sp "Entrez votre GitHub Personal Access Token: " token
-
-# Ajouter la clé SSH à GitHub via l'API
-response=$(curl -s -H "Authorization: token $token"     --data "{"title":"$(hostname)","key":"$pubkey"}"     https://api.github.com/user/keys)
-
-# Vérifier si l'opération a réussi
-if echo "$response" | grep -q "key"; then
-    echo -e "\nLa clé SSH a été ajoutée avec succès à votre compte GitHub."
-else
-    echo -e "\nUne erreur s'est produite :"
-    echo "$response"
-fi
+PROGRAM_NAME="programmeX"
+INSTALL_DIR="/usr/local/bin"
+PROGRAM_PATH="${INSTALL_DIR}/${PROGRAM_NAME}"
+PROGRAM_LIB_DIR="${INSTALL_DIR}/${PROGRAM_NAME}"
+BIN_DIR="${PROGRAM_NAME}/bin"
+LIB_DIR="${PROGRAM_NAME}/lib"
 ```
 
-## Notes
+Règles de Nomination
+Le nom du programme doit être défini dans la variable PROGRAM_NAME.
+Les noms des fichiers et répertoires doivent utiliser PROGRAM_NAME pour construire leurs chemins.
+Scripts
+${PROGRAM_NAME}.install.sh
 
-- Le script demande un GitHub Personal Access Token pour authentifier les requêtes API. Assurez-vous d'avoir créé ce jeton avec les permissions appropriées (`repo`, `admin:public_key`).
-- L'utilisation de `sudo` dans le script suppose que l'utilisateur a les privilèges administratifs sur la machine.
+Ce script installe le programme sur le système.
+Il doit copier les scripts dans les répertoires appropriés et rendre les scripts exécutables.
+Le script demande une confirmation avant l'installation.
+Exemple de contenu :
 
-## Avertissements
+```${PROGRAM_NAME}.install.sh
+#!/bin/bash
 
-- Veillez à sécuriser votre clé privée (`~/.ssh/id_rsa`) et ne la partagez jamais.
-- Ce script est conçu pour fonctionner sur les systèmes basés sur Debian/Ubuntu. Si vous utilisez une autre distribution Linux, vous devrez peut-être ajuster les commandes d'installation.
+source programmeX/lib/config.sh
+
+install_program() {
+    echo "Installation de ${PROGRAM_NAME}..."
+    sudo mkdir -p ${PROGRAM_LIB_DIR}
+    sudo cp ${BIN_DIR}/${PROGRAM_NAME}.sh ${PROGRAM_PATH}
+    sudo chmod +x ${PROGRAM_PATH}
+    sudo cp ${LIB_DIR}/*.sh ${PROGRAM_LIB_DIR}/
+    sudo chmod +x ${PROGRAM_LIB_DIR}/*.sh
+    sudo cp ${LIB_DIR}/config.sh ${PROGRAM_LIB_DIR}/
+    sudo chmod +x ${PROGRAM_LIB_DIR}/config.sh
+    echo "${PROGRAM_NAME} a été installé avec succès et est accessible depuis le PATH."
+}
+
+read -p "Ce script va installer ${PROGRAM_NAME} sur votre machine et nécessite des droits administratifs. Voulez-vous continuer ? (oui/non) " response
+case "$response" in
+    [oO][uU][iI]|[yY][eE][sS])
+        install_program
+        ;;
+    *)
+        echo "Installation annulée."
+        exit 1
+        ;;
+esac
+```
+
+
